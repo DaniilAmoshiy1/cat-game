@@ -10,10 +10,12 @@ from pathlib import Path
 CURRENT_FOLDER = Path(__file__).parent
 FPS = 50
 SCREEN_SIZE = (1280, 720)
+STEP_PIXELS = 50
 
 
 class Game(pygame.sprite.Sprite):
     def __init__(self, video_path, image_background, image_player):
+        pygame.display.set_mode((1280, 720))
         self.video_path = video_path
         self.image_background = image_background
         self.image_player = image_player
@@ -23,15 +25,29 @@ class Game(pygame.sprite.Sprite):
         self.y_speed = 0
         self.x_speed = 0
 
-        self.scene = None
 
-        # self.scene = pygame.display.get_surface().get_rect()
-        # print(f'area bottom = {self.scene.bottom}')
-        # self.rect.centerx = self.scene.centerx
-        # self.rect.y = 100
-        # self.rect.centerx = self.scene.centerx
-        # self.rect.x = 100
-        # self.rect.centerx = self.scene.centerx,
+        self.scene = pygame.display.get_surface().get_rect()
+        print(f'area bottom = {self.scene.bottom}')
+        self.rect.centerx = self.scene.centerx
+        self.rect.y = 100
+        self.rect.centerx = self.scene.centerx
+        self.rect.x = 100
+        self.rect.centerx = self.scene.centerx
+
+    async def update(self):
+        # Проверьте, пересекается ли персонаж с границами сцены
+        if not self.rect.colliderect(self.scene):
+            # Если персонаж выходит за границы сцены, выполните необходимые действия
+            if self.rect.bottom > self.scene.bottom or self.rect.top < self.scene.top:
+                self.y_speed *= -1
+                self.rect.y += self.y_speed
+
+            if self.rect.left < self.scene.left or self.rect.right > self.scene.right:
+                self.x_speed *= -1
+                self.rect.x += self.x_speed
+
+                if self.y_speed < 0:
+                    self.y_speed += 0.2
 
     async def start_loading(self):
         pygame.init()
@@ -47,6 +63,8 @@ class Game(pygame.sprite.Sprite):
 
         # Загрузка видеофайла
         clip = VideoFileClip(self.video_path)
+
+        print('We are inside start_loading.')
 
         running = True
         while running:
@@ -68,6 +86,7 @@ class Game(pygame.sprite.Sprite):
             pygame.display.update()
 
             if pygame.time.get_ticks() / 1000 >= clip.duration:
+                print('We are leaving start_loading')
                 break
 
             clock.tick(FPS)
@@ -85,7 +104,7 @@ class Game(pygame.sprite.Sprite):
         screen.blit(image_surface, (0, 0))
         pygame.display.update()
         player_x = 0
-        player_y = -200
+        player_y = 0
         player = pygame.image.load(self.image_player)
         player.set_colorkey((255, 255, 255))
         screen.blit(player, (player_x, player_y))
@@ -105,6 +124,8 @@ class Game(pygame.sprite.Sprite):
             pygame.mixer.music.load(music_file)
             pygame.mixer.music.play()
 
+        print('We are inside start_game.')
+
         running = True
         while running:
             for event in pygame.event.get():
@@ -114,31 +135,21 @@ class Game(pygame.sprite.Sprite):
                         pygame.quit()
                         sys.exit()
                     elif event.key == pygame.K_w:
-                        self.y_speed = -10
+                        player_y -= STEP_PIXELS
                     elif event.key == pygame.K_s:
-                        self.y_speed = 10
+                        player_y += STEP_PIXELS
                     elif event.key == pygame.K_d:
-                        self.x_speed = 10
+                        player_x += STEP_PIXELS
                     elif event.key == pygame.K_a:
-                        self.x_speed = -10
-                elif event.type == pygame.KEYUP:
-                    if event.key in (pygame.K_w, pygame.K_s):
-                        self.y_speed = 0
-                    elif event.key in (pygame.K_a, pygame.K_d):
-                        self.x_speed = 0
-
-            player_x += self.x_speed
-            player_y += self.y_speed
-            # Check borders:
-            if player_y < self.rect.height:
-                player_y = self.rect.height
-            elif player_y > SCREEN_SIZE[1] - self.rect.height:
-                player_y = SCREEN_SIZE[1] - self.rect.height
-
-            if player_x < 0:
-                player_x = 0
-            elif player_x > SCREEN_SIZE[0] - self.rect.width:
-                player_x = SCREEN_SIZE[0] - self.rect.width
+                        player_x -= STEP_PIXELS
+                # elif event.type == pygame.KEYUP:
+                #     if event.key in (pygame.K_w, pygame.K_s):
+                #         self.y_speed = 0
+                #     elif event.key in (pygame.K_a, pygame.K_d):
+                #         self.x_speed = 0
+            #
+            # player_x += self.x_speed
+            # player_y += self.y_speed
 
             screen.fill((0, 0, 0))
             screen.blit(image_surface, (0, 0))
