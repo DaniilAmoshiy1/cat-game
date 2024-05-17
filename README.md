@@ -4,7 +4,7 @@
 
 ## What needs from hardware and software for interacting with code:
 
-Keyboard, mouse, and random IDE.
+Keyboard, mouse, and random IDE
 
 ## A little about the project:
 
